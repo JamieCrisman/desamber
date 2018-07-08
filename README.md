@@ -14,3 +14,8 @@ func ExampleDate_WithYear() {
 	// output: 18N07
 }
 ```
+
+## TODO
+
+- [ ] Parse desamber format strings to desamber.Date
+- [ ] Add a way to convert to gregorian? time.Time?
