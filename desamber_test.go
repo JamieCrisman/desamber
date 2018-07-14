@@ -129,6 +129,114 @@ func TestParse(t *testing.T) {
 
 }
 
+func TestMinusMonth(t *testing.T) {
+	tt := []struct {
+		Name         string
+		Input        string
+		ExpectedNext rune
+		ExpectedYear int
+	}{
+		{
+			Name:         "1st month prev century",
+			Input:        "2000A01",
+			ExpectedNext: '+',
+			ExpectedYear: 99,
+		},
+		{
+			Name:         "1st month",
+			Input:        "2018A01",
+			ExpectedNext: '+',
+			ExpectedYear: 17,
+		},
+		{
+			Name:         "5th month",
+			Input:        "2018E01",
+			ExpectedNext: 'D',
+			ExpectedYear: 18,
+		},
+		{
+			Name:         "26th month",
+			Input:        "2018Z01",
+			ExpectedNext: 'Y',
+			ExpectedYear: 18,
+		},
+		{
+			Name:         "+th month",
+			Input:        "2018+01",
+			ExpectedNext: 'Z',
+			ExpectedYear: 18,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.Name, func(t *testing.T) {
+			date, _ := desamber.Parse(tc.Input)
+			date.MinusMonth()
+			if date.Month != tc.ExpectedNext {
+				t.Errorf("Expected month to be %v, but got %v", string(tc.ExpectedNext), string(date.Month))
+			}
+			if date.Year != tc.ExpectedYear {
+				t.Errorf("Expected year to be %v, but got %v", tc.ExpectedYear, date.Year)
+			}
+
+		})
+	}
+
+}
+
+func TestPlusMonth(t *testing.T) {
+	tt := []struct {
+		Name         string
+		Input        string
+		ExpectedNext rune
+		ExpectedYear int
+	}{
+		{
+			Name:         "1st month",
+			Input:        "2018A01",
+			ExpectedNext: 'B',
+			ExpectedYear: 18,
+		},
+		{
+			Name:         "5th month",
+			Input:        "2018E01",
+			ExpectedNext: 'F',
+			ExpectedYear: 18,
+		},
+		{
+			Name:         "26th month",
+			Input:        "2018Z01",
+			ExpectedNext: '+',
+			ExpectedYear: 18,
+		},
+		{
+			Name:         "+th month",
+			Input:        "2018+01",
+			ExpectedNext: 'A',
+			ExpectedYear: 19,
+		},
+		{
+			Name:         "+th month new century",
+			Input:        "2099+01",
+			ExpectedNext: 'A',
+			ExpectedYear: 00,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.Name, func(t *testing.T) {
+			date, _ := desamber.Parse(tc.Input)
+			date.PlusMonth()
+			if date.Month != tc.ExpectedNext {
+				t.Errorf("Expected month to be %v, but got %v", string(tc.ExpectedNext), string(date.Month))
+			}
+			if date.Year != tc.ExpectedYear {
+				t.Errorf("Expected year to be %v, but got %v", tc.ExpectedYear, date.Month)
+			}
+		})
+	}
+
+}
 func TestFromDate(t *testing.T) {
 	tt := []struct {
 		Name     string

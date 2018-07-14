@@ -131,6 +131,48 @@ func (d *Date) WithYear() *Date {
 	return d
 }
 
+func (d *Date) MinusMonth() *Date {
+	switch d.Month {
+	case 'A':
+		d.Month = '+'
+		if d.yearSet {
+			d.Year--
+			if d.Year < 0 {
+				d.Year += 100 // to 99, etc
+				if d.centurySet {
+					d.Century--
+				}
+			}
+		}
+	case '+':
+		d.Month = 'Z'
+	default:
+		d.Month--
+	}
+	return d
+}
+
+func (d *Date) PlusMonth() *Date {
+	switch d.Month {
+	case '+':
+		d.Month = 'A'
+		if d.yearSet {
+			d.Year++
+			if d.Year > 99 {
+				d.Year -= 100 // to 0, etc
+				if d.centurySet {
+					d.Century++
+				}
+			}
+		}
+	case 'Z':
+		d.Month = '+'
+	default:
+		d.Month++
+	}
+	return d
+}
+
 func (d Date) String() string {
 	var b strings.Builder
 	if d.useYear && d.yearSet {
