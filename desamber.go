@@ -11,18 +11,24 @@ import (
 
 // Date is the parsed date
 type Date struct {
-	Year      string
-	Century   string
-	Month     rune
-	Day       string
+	Year    int
+	yearSet bool
+
+	Century    int
+	centurySet bool
+
+	Day    int
+	daySet bool
+
+	Month rune
+
 	useCentry bool
 	useYear   bool
 }
 
 // New takes in a time.Time and converts it to desamber.Date object
 func New(date time.Time) *Date {
-	c := date.Year() / 100
-	y := date.Year() % 100
+
 	doty := date.YearDay()
 	m := 'A'
 	if doty == 365 || doty == 366 {
@@ -32,21 +38,27 @@ func New(date time.Time) *Date {
 		m = rune(65 + mval)
 	}
 	day := doty % 14
+	// we do range of 1 to 14
 	if day == 0 {
 		day = 14
 	}
+
 	d := Date{
-		Century: fmt.Sprintf("%02v", c),
-		Year:    fmt.Sprintf("%02v", y),
-		Month:   m,
-		Day:     fmt.Sprintf("%02v", day),
+		Century:    date.Year() / 100,
+		centurySet: true,
+		Year:       date.Year() % 100,
+		yearSet:    true,
+		Month:      m,
+		Day:        day,
+		daySet:     true,
 	}
 	return &d
 }
 
 var (
+	// Splits the string into the parts
 	reg = regexp.MustCompile(`^((\d{2})?(\d{2}))?([A-Z\+])?(\d{2})?[^\s]*$`)
-	// match = regexp.MustCompile(`^(\d\d(\d\d)?)?[A-Z\+](\d\d)|^[A-Z\+](\d\d)|^[A-Z\+]$|^(\d\d)$`)
+	// ensures a valid string
 	match = regexp.MustCompile(`^(\d\d(\d\d)?)?[A-Z\+](\d\d)?$|^[A-Z\+](\d\d)|^[A-Z\+]$|^(\d\d)$`)
 )
 
@@ -57,11 +69,12 @@ func Parse(s string) (*Date, error) {
 	}
 	ss := reg.FindStringSubmatch(strings.ToUpper(s))
 	var month rune
-	var year, century string
 	if len(ss[4]) != 0 {
 		month = rune(ss[4][0])
 	}
-
+	var parsedYear, parsedCentury, parsedDay int64
+	var centurySet, yearSet, daySet bool
+	var err error
 	if len(ss[1]) == 4 {
 		fullYear, err := strconv.ParseInt(ss[1], 10, 0)
 		if err != nil {
@@ -70,17 +83,36 @@ func Parse(s string) (*Date, error) {
 		if isLeap(fullYear) && month == '+' && ss[5] != "01" && ss[5] != "02" {
 			return nil, errors.New("Invalid day for leap year")
 		}
-		year = ss[3]
-		century = ss[2]
-	} else {
-		year = ss[3]
+
+		parsedCentury, err = strconv.ParseInt(ss[2], 10, 0)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(ss[3]) != 0 {
+		parsedYear, err = strconv.ParseInt(ss[3], 10, 0)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(ss[5]) != 0 {
+		parsedDay, err = strconv.ParseInt(ss[5], 10, 0)
+		if err != nil {
+			return nil, err
+		}
 	}
 
+	centurySet = len(ss[2]) != 0
+	yearSet = len(ss[3]) != 0
+	daySet = len(ss[5]) != 0
 	result := Date{
-		Day:     ss[5],
-		Month:   month,
-		Year:    year,
-		Century: century,
+		Day:        int(parsedDay),
+		daySet:     daySet,
+		Month:      month,
+		Year:       int(parsedYear),
+		yearSet:    yearSet,
+		Century:    int(parsedCentury),
+		centurySet: centurySet,
 	}
 
 	return &result, nil
@@ -101,17 +133,17 @@ func (d *Date) WithYear() *Date {
 
 func (d Date) String() string {
 	var b strings.Builder
-	if d.useYear && len(d.Year) != 0 {
-		if d.useCentry && len(d.Century) != 0 {
-			b.WriteString(d.Century)
+	if d.useYear && d.yearSet {
+		if d.useCentry && d.centurySet {
+			b.WriteString(fmt.Sprintf("%02d", d.Century))
 		}
-		b.WriteString(d.Year)
+		b.WriteString(fmt.Sprintf("%02d", d.Year))
 	}
 	if d.Month != 0 {
 		b.WriteString(string(d.Month))
 	}
-	if len(d.Day) != 0 {
-		b.WriteString(d.Day)
+	if d.daySet {
+		b.WriteString(fmt.Sprintf("%02d", d.Day))
 	}
 	return fmt.Sprint(b.String())
 }
